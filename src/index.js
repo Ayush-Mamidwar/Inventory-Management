@@ -3,6 +3,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { connectDB, disconnectDB } from "../config/db.js";
+import inventoryRoutes from "./routes/inventoryRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -30,26 +31,7 @@ app.use(
   })
 );
 
-// Home route
-app.get("/", (req, res) => {
-  res.send("Welcome to my Node.js backend!");
-});
-
-// Example API endpoint
-app.get("/api/users", (req, res) => {
-  res.json([
-    { id: 1, name: "Alice" },
-    { id: 2, name: "Bob" },
-  ]);
-});
-
-// POST endpoint
-app.post("/api/users", (req, res) => {
-  res.status(201).json({
-    message: "User received successfully",
-    data: req.body,
-  });
-});
+app.use("/api", inventoryRoutes);
 
 let server;
 
