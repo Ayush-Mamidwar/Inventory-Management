@@ -322,6 +322,69 @@ export const createBill = async (req, res) => {
 // GET /api/inventory/bills
 export const getBills = async (req, res) => {
   try {
+    const rawPage = Number(req.query.page || 1);
+    const rawLimit = Number(req.query.limit || 15);
+    const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
+    const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? rawLimit : 15;
+    const skip = (page - 1) * limit;
+
+    const wantPaginated = Object.prototype.hasOwnProperty.call(req.query, "page") ||
+      Object.prototype.hasOwnProperty.call(req.query, "limit");
+
+    if (wantPaginated) {
+      const [totalCount, bills] = await Promise.all([
+        prisma.bill.count(),
+        prisma.bill.findMany({
+          include: {
+            items: {
+              include: {
+                product: true,
+                stockUsages: true,
+              },
+            },
+          },
+          orderBy: { billDate: "desc" },
+          skip,
+          take: limit,
+        }),
+      ]);
+
+      const result = bills.map((bill) => ({
+        ...bill,
+        total: bill.items.reduce(
+          (sum, item) =>
+            sum + Number(item.quantity) * Number(item.unitPrice),
+          0
+        ),
+        items: bill.items.map((item) => {
+          const consumedQuantity = (item.stockUsages || []).reduce(
+            (total, usage) => total + Number(usage.quantity),
+            0
+          );
+
+          return {
+            ...item,
+            quantity: Number(item.quantity),
+            unitPrice: Number(item.unitPrice),
+            consumedQuantity,
+            remainingQuantity: getBillItemRemainingQuantity(item, item.stockUsages || []),
+          };
+        }),
+      }));
+
+      return res.json({
+        bills: result,
+        pagination: {
+          page,
+          limit,
+          totalCount,
+          totalPages: Math.max(1, Math.ceil(totalCount / limit)),
+          hasNextPage: page * limit < totalCount,
+          hasPrevPage: page > 1,
+        },
+      });
+    }
+
     const bills = await prisma.bill.findMany({
       include: {
         items: {
