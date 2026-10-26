@@ -15,7 +15,7 @@ export const calculateStock = (product = {}) => {
     purchased,
     consumed,
     currentStock: purchased - consumed,
-    lowStock: purchased - consumed <= Number(product.limit ?? 0),
+    lowStock: purchased - consumed < Number(product.limit ?? 0),
   };
 };
 

@@ -226,7 +226,7 @@ export const updateProduct = async (req, res) => {
 // POST /api/inventory/bills
 export const createBill = async (req, res) => {
   try {
-    const { billNumber, billDate, notes, items } = req.body;
+    const { billNumber, billDate, notes, supplier, items } = req.body;
 
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({
@@ -279,6 +279,7 @@ export const createBill = async (req, res) => {
         billNumber: billNumber || null,
         billDate: billDate ? new Date(billDate) : new Date(),
         notes: notes || null,
+        supplier: supplier?.trim() || null,
         items: {
           create: items.map((item) => ({
             productId: item.productId,
