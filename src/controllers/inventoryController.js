@@ -562,7 +562,19 @@ export const recordStockUsage = async (req, res) => {
 // GET /api/inventory/usage
 export const getStockUsage = async (req, res) => {
   try {
+    const selectedDate = req.query.date;
+
+    const where = selectedDate
+      ? {
+          usedAt: {
+            gte: new Date(`${selectedDate}T00:00:00.000Z`),
+            lt: new Date(`${selectedDate}T23:59:59.999Z`),
+          },
+        }
+      : {};
+
     const usages = await prisma.stockUsage.findMany({
+      where,
       include: {
         product: {
           select: { id: true, name: true, unit: true },
